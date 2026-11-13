@@ -9,7 +9,7 @@ COPY web web
 COPY crew crew
 COPY market market
 COPY third_party third_party
-COPY config.yaml LICENSE THIRD_PARTY_NOTICES.md ./
+COPY config.yaml LICENSE NOTICE THIRD_PARTY_NOTICES.md ./
 RUN useradd -m -u 1000 proxmino && mkdir -p /data /home/proxmino/.proxmino && chown -R proxmino /data /home/proxmino
 USER proxmino
 EXPOSE 3000

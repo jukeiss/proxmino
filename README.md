@@ -38,11 +38,15 @@ cd proxmino
 ./run.sh
 ```
 
-Then open http://127.0.0.1:3000. You also need [Ollama](https://ollama.com) running with a model; the
-[quick start guide](docs/01-quickstart.md) walks through it.
+Then open http://127.0.0.1:3000. You also need [Ollama](https://ollama.com) running with a model.
+
+**Full installation guide:** [docs/INSTALL.md](docs/INSTALL.md) covers macOS, Linux, Windows (WSL2) and
+Docker step by step, choosing and adding a model, checking it works, updating, uninstalling and
+troubleshooting.
 
 ## Tutorials
 
+0. [Installation (all systems)](docs/INSTALL.md)
 1. [Quick start](docs/01-quickstart.md)
 2. [Models](docs/02-models.md): which one to pick and how to add it
 3. [Using the app](docs/03-using-the-app.md): Auto mode, Think, Search, DeepSearch, files, agents
