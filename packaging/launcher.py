@@ -12,6 +12,13 @@ import time
 import urllib.request
 import webbrowser
 
+# Windows consoles default to a legacy code page; printing characters like "→" would crash the server.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 HOME_DIR = os.path.join(os.path.expanduser("~"), ".proxmino")
 if getattr(sys, "frozen", False):
     # Installed apps can't write inside their own folder: keep data next to your bots in ~/.proxmino.
@@ -39,6 +46,14 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] in ("ask", "code", "password", "serve"):
         from proxmino.__main__ import main as cli      # `Proxmino ask "..."` etc. still work
         return cli()
+    try:
+        import proxmino.server  # noqa: F401  load it here so the bundle includes it and errors are visible
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        if os.environ.get("APP_SMOKE"):
+            os._exit(1)
+        raise
     port = free_port(3000)
     url = f"http://127.0.0.1:{port}/"
     from proxmino.__main__ import main as cli
