@@ -1,0 +1,13 @@
+FROM ./MODEL.gguf
+# Granite 4.2 chat format (ChatML). The empty <think></think> asks for a direct answer; the app shows its
+# own step-by-step working where it helps.
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+<think></think>"""
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+PARAMETER temperature 0.6
+PARAMETER num_ctx 8192

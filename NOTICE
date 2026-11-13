@@ -1,0 +1,10 @@
+Proxmino
+Copyright 2026 jukeiss
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes parts adapted from Rakazo (https://github.com/elie222/rakazo), Copyright the Rakazo authors,
+licensed under the Apache License, Version 2.0. See third_party/rakazo/NOTICE.md for the list of files.
+
+The Proxmino models are fine-tuned from IBM Granite (https://huggingface.co/ibm-granite), licensed under the
+Apache License, Version 2.0. Training data sources and their licences are listed in MODEL_AND_DATA_LICENSES.md.

@@ -1,0 +1,16 @@
+.venv/
+data/
+.env
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+models/*.gguf
+models/Modelfile.lite
+models/Modelfile.v5
+training/evals/results/
+training/ckpt-*/
+training/*-adapter/
+logs/
+proxmino-data.zip
+data_big/

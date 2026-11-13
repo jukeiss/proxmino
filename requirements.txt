@@ -1,0 +1,7 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+httpx>=0.27
+pyyaml>=6.0
+ddgs>=9.0
+pytest>=8.0
+# Optional, better page extraction:  pip install trafilatura

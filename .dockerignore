@@ -1,0 +1,13 @@
+# Only the app goes into the image: never your chats, keys or local tools.
+.venv
+data
+.env
+.env.*
+!.env.example
+**/__pycache__
+.pytest_cache
+tests
+models
+*.gguf
+.git
+.DS_Store

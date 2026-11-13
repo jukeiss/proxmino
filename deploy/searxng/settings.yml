@@ -1,0 +1,10 @@
+# SearXNG (open-source metasearch, AGPL-3.0, runs as its own container) gives Proxmino web search with no API key.
+# Only the app can reach it: no port is published.
+use_default_settings: true
+server:
+  secret_key: "set-by-SEARXNG_SECRET"   # replaced by the SEARXNG_SECRET environment variable
+  limiter: false                        # private: only Proxmino calls it
+  image_proxy: false
+search:
+  safe_search: 0
+  formats: [html, json]
