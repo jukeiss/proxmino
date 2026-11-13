@@ -15,6 +15,18 @@ uninstalling. If something goes wrong, see [Troubleshooting](#troubleshooting) a
 
 No GPU is needed. A GPU or Apple Silicon makes answers much faster.
 
+## Easiest: the installer
+
+Download the installer for your computer from the
+[latest release](https://github.com/jukeiss/proxmino/releases/latest) (`.dmg` for Mac, `Setup-x64.exe` or
+`portable-x64.exe` for Windows, `.deb`, `.rpm`, `.AppImage` or `.flatpak` for Linux). You still need
+[Ollama](https://ollama.com) with a model; then skip to [Choosing a model](#choosing-a-model).
+
+The builds aren't code-signed yet: on macOS right-click the app and choose **Open** the first time; on Windows
+click **More info**, then **Run anyway**.
+
+The rest of this guide installs from source, which works everywhere and makes updating easy.
+
 ---
 
 ## macOS
