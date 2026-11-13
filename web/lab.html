@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{PRODUCT}} Training Lab</title>
+<style>
+:root{
+  --bg:#05070b;--panel:#0a0e15;--panel2:#0e131c;--line:#18202d;--line2:#243041;--text:#d8e2f0;--dim:#7d8aa0;--faint:#4a566a;
+  --cyan:#39d0ff;--green:#3cf5a0;--amber:#ffb547;--pink:#ff5bd1;--red:#ff5d6c;--violet:#9a8cff;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,Consolas,monospace;--ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:13px/1.45 var(--mono);-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:
+  radial-gradient(1200px 600px at 10% -10%,rgba(57,208,255,.10),transparent 60%),
+  radial-gradient(900px 500px at 110% 10%,rgba(255,91,209,.07),transparent 60%),
+  linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/100% 32px,
+  linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/32px 100%,var(--bg)}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+a{color:var(--cyan);text-decoration:none}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line);background:rgba(5,7,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:5}
+.logo{font-weight:700;letter-spacing:2px;font-size:14px}
+.logo i{font-style:normal;color:var(--cyan)}
+.rec{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);animation:blink 1.4s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.chip{border:1px solid var(--line2);border-radius:6px;padding:3px 9px;font-size:11px;letter-spacing:1px;color:var(--dim);background:var(--panel)}
+.chip b{color:var(--text);font-weight:600;margin-left:6px}
+.chip.ok b{color:var(--green)}.chip.warn b{color:var(--amber)}.chip.bad b{color:var(--red)}
+.clock{color:var(--cyan);font-size:12px;letter-spacing:1px}
+main{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;padding:16px 20px 30px;max-width:1600px;margin:0 auto}
+.card{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:hidden;animation:in .6s var(--ease) both}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.5}
+@keyframes in{from{opacity:0;transform:translateY(12px)}}
+.card h2{margin:0 0 12px;font-size:11px;font-weight:600;letter-spacing:2px;color:var(--dim);text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.card h2 .tag{margin-left:auto;color:var(--faint);letter-spacing:1px}
+.c-run{grid-column:span 4}.c-loss{grid-column:span 8}.c-tps{grid-column:span 4}.c-race{grid-column:span 5}.c-mix{grid-column:span 3}
+.c-hist{grid-column:span 7}.c-log{grid-column:span 5}.c-sys{grid-column:span 12}
+@media(max-width:1100px){.c-run,.c-loss,.c-tps,.c-race,.c-mix,.c-hist,.c-log{grid-column:span 12}}
+.runhead{display:flex;gap:16px;align-items:center}
+.ring{width:132px;height:132px;flex:none;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{fill:none;stroke:var(--line2);stroke-width:9}
+.ring .bar{fill:none;stroke:url(#ringgrad);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset 1.2s var(--ease);filter:drop-shadow(0 0 6px rgba(57,208,255,.55))}
+.ring .mid{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .pct{font-size:26px;font-weight:700;color:#fff}.ring .sub{font-size:10px;color:var(--dim);letter-spacing:1px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px}
+.kv span{color:var(--dim)}.kv b{color:var(--text);font-weight:500;overflow-wrap:anywhere}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.metric{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:rgba(255,255,255,.015)}
+.metric small{display:block;color:var(--dim);font-size:10px;letter-spacing:1px}
+.metric b{font-size:18px;color:#fff;font-weight:600;font-variant-numeric:tabular-nums}
+.state{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1.5px;padding:2px 8px;border-radius:5px;border:1px solid}
+.state.train{color:var(--green);border-color:rgba(60,245,160,.4)}.state.cool{color:var(--amber);border-color:rgba(255,181,71,.4)}.state.idle{color:var(--dim);border-color:var(--line2)}
+.state i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1s steps(2) infinite}
+svg.chart{width:100%;height:auto;display:block;overflow:visible}
+.grid line{stroke:var(--line);stroke-width:1}.axis text{fill:var(--faint);font-size:10px;font-family:var(--mono)}
+.tline{fill:none;stroke:var(--cyan);stroke-width:2;stroke-linejoin:round;filter:drop-shadow(0 0 4px rgba(57,208,255,.6))}
+.tarea{fill:url(#areagrad)}
+.raw{fill:none;stroke:rgba(57,208,255,.22);stroke-width:1}
+.vdot{fill:var(--green);filter:drop-shadow(0 0 5px var(--green))}
+.vdot.last{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{r:7}}
+.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 1.6s var(--ease) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.cross line{stroke:var(--line2);stroke-dasharray:3 3}.cross rect{fill:rgba(10,14,21,.92);stroke:var(--line2)}.cross text{fill:var(--text);font-size:11px;font-family:var(--mono)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:8px}.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.bars{display:flex;align-items:flex-end;gap:2px;height:110px}
+.bars span{flex:1;background:linear-gradient(180deg,var(--violet),rgba(154,140,255,.15));border-radius:2px 2px 0 0;min-height:2px;transition:height .8s var(--ease)}
+.racebar{display:grid;grid-template-columns:110px 1fr 60px;gap:10px;align-items:center;margin:8px 0;font-size:12px}
+.racebar .t{height:12px;border-radius:6px;background:var(--line);overflow:hidden}
+.racebar .f{height:100%;border-radius:6px;width:0;transition:width 1.2s var(--ease)}
+.win{color:var(--green);font-size:10px;letter-spacing:1.5px;border:1px solid rgba(60,245,160,.45);border-radius:4px;padding:1px 6px;margin-left:6px;box-shadow:0 0 12px rgba(60,245,160,.25)}
+.donut{display:flex;gap:12px;align-items:center}
+.donut svg{width:150px;height:150px;flex:none;transform:rotate(-90deg)}
+.donut .seg{fill:none;stroke-width:18;transition:stroke-dasharray 1.2s var(--ease)}
+.dleg{font-size:11px;display:grid;gap:4px}.dleg div{display:flex;align-items:center;gap:6px;color:var(--dim)}.dleg b{color:var(--text);margin-left:auto;font-weight:500}
+.dleg i{width:9px;height:9px;border-radius:2px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:var(--faint);font-weight:500;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 8px;border-bottom:1px solid var(--line2)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+tr.live td{color:#fff;background:rgba(57,208,255,.05)}tr.live td:first-child{box-shadow:inset 2px 0 0 var(--cyan)}
+.term{height:250px;overflow:auto;background:#03050800;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.55}
+.term div{white-space:pre-wrap;color:#9fb0c6}
+.term div.new{animation:newline 1.6s var(--ease)}
+@keyframes newline{from{background:rgba(57,208,255,.18);color:#fff}}
+.term .val{color:var(--green)}.term .hw{color:var(--amber)}.term .stage{color:var(--cyan)}
+.term .cur::after{content:"_";color:var(--cyan);animation:blink 1s steps(2) infinite}
+.sysrow{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+@media(max-width:900px){.sysrow{grid-template-columns:repeat(2,1fr)}}
+.gauge small{color:var(--dim);font-size:10px;letter-spacing:1.5px}.gauge b{display:block;font-size:16px;color:#fff;margin:2px 0 6px;font-weight:600}
+.gauge .t{height:6px;border-radius:3px;background:var(--line)}.gauge .f{height:100%;border-radius:3px;width:0;transition:width 1s var(--ease)}
+footer{color:var(--faint);font-size:11px;text-align:center;padding:0 20px 24px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.draw{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<header>
+  <span class="rec" aria-hidden="true"></span>
+  <span class="logo">{{PRODUCT}} <i>//</i> TRAINING LAB</span>
+  <span class="clock" id="clock"></span>
+  <div class="chips" id="chips"></div>
+  <a href="/" title="Back to the app">&larr; app</a>
+</header>
+<main>
+  <section class="card c-run"><h2>Active run <span class="tag" id="runkind"></span></h2>
+    <div class="runhead">
+      <div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ringgrad" x1="0" x2="1"><stop offset="0" stop-color="#39d0ff"/><stop offset="1" stop-color="#3cf5a0"/></linearGradient></defs>
+        <circle class="track" cx="60" cy="60" r="50"/><circle class="bar" id="ringbar" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg>
+        <div class="mid"><div><div class="pct" id="pct">0%</div><div class="sub" id="steps">0 / 0</div></div></div></div>
+      <div style="flex:1;min-width:0"><div id="state"></div><div class="kv" id="runkv" style="margin-top:10px"></div></div>
+    </div>
+    <div class="big3"><div class="metric"><small>TIME LEFT</small><b id="eta">-</b></div><div class="metric"><small>STEPS / MIN</small><b id="spm">-</b></div><div class="metric"><small>TOKENS SEEN</small><b id="tok">0</b></div></div>
+  </section>
+  <section class="card c-loss"><h2>Loss <span class="tag" id="losstag"></span></h2><div id="loss"></div>
+    <div class="legend"><span><i style="background:var(--cyan)"></i>training loss (smoothed)</span><span><i style="background:rgba(57,208,255,.3)"></i>raw</span><span><i style="background:var(--green)"></i>held-out loss</span></div></section>
+  <section class="card c-tps"><h2>Throughput <span class="tag">tokens / s</span></h2><div class="bars" id="tps"></div><div class="legend" id="tpsleg"></div></section>
+  <section class="card c-race"><h2>Optimizer race <span class="tag">AdamW vs Muon · lower is better</span></h2><div id="race"></div></section>
+  <section class="card c-mix"><h2>Data mix</h2><div id="mix"></div></section>
+  <section class="card c-hist"><h2>All runs</h2><div id="hist"></div></section>
+  <section class="card c-log"><h2>Live log <span class="tag" id="logtag"></span></h2><div class="term" id="term" role="log" aria-live="off"></div></section>
+  <section class="card c-sys"><h2>Machine</h2><div class="sysrow" id="sys"></div></section>
+</main>
+<footer>Read from the training logs on this computer every 3 seconds. Nothing leaves this machine.</footer>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const fmt = (n, d = 0) => n == null ? "-" : Number(n).toLocaleString(undefined, {maximumFractionDigits: d, minimumFractionDigits: d});
+const COLORS = ["#39d0ff", "#3cf5a0", "#ffb547", "#ff5bd1", "#9a8cff", "#ff5d6c", "#7dd3fc", "#fde68a"];
+const RUNCOLOR = name => /muon-2e-3/.test(name) ? "#ff5bd1" : /muon/.test(name) ? "#ffb547" : /adamw/.test(name) ? "#39d0ff" : "#9a8cff";
+let first = true, lastLog = [], counter = {tok: 0};
+
+function hms(s) { if (s == null) return "-"; s = Math.max(0, s | 0); const h = s / 3600 | 0, m = (s % 3600) / 60 | 0; return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m ${String(s % 60).padStart(2, "0")}s`; }
+function countTo(el, key, to) {  // numbers roll up instead of jumping
+  const from = counter[key] || 0; counter[key] = to;
+  const t0 = performance.now(), d = 900;
+  const step = t => { const k = Math.min(1, (t - t0) / d), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function smooth(pts, w = 5) { return pts.map((p, i) => { const s = pts.slice(Math.max(0, i - w + 1), i + 1); return [p[0], s.reduce((a, q) => a + q[1], 0) / s.length]; }); }
+
+function lossChart(run, animate) {
+  const W = 900, H = 260, P = 38, tr = run.train || [], va = run.val || [];
+  if (!tr.length && !va.length) return `<div style="color:var(--faint);padding:40px 0;text-align:center">Waiting for the first loss values...</div>`;
+  const all = tr.concat(va), maxX = Math.max(run.steps_total || 0, ...all.map(p => p[0]), 1);
+  const ys = all.map(p => p[1]), lo = Math.min(...ys) * .95, hi = Math.max(...ys) * 1.03;
+  const x = v => P + (W - P - 10) * v / maxX, y = v => H - P + 6 - (H - P - 10) * (v - lo) / ((hi - lo) || 1);
+  const sm = smooth(tr), path = sm.map(p => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
+  let len = 0; for (let i = 1; i < sm.length; i++) len += Math.hypot(x(sm[i][0]) - x(sm[i - 1][0]), y(sm[i][1]) - y(sm[i - 1][1]));
+  const area = sm.length ? `M${x(sm[0][0])},${H - P + 6} L${path.replace(/ /g, " L")} L${x(sm[sm.length - 1][0])},${H - P + 6} Z` : "";
+  const grid = [0, .25, .5, .75, 1].map(f => { const v = lo + (hi - lo) * f; return `<line x1="${P}" x2="${W - 10}" y1="${y(v)}" y2="${y(v)}"/><text x="2" y="${y(v) + 3}">${v.toFixed(2)}</text>`; }).join("");
+  const xt = [0, .25, .5, .75, 1].map(f => `<text x="${x(maxX * f)}" y="${H - 8}" text-anchor="middle">${fmt(maxX * f)}</text>`).join("");
+  return `<svg class="chart" id="losssvg" viewBox="0 0 ${W} ${H}" data-maxx="${maxX}" data-lo="${lo}" data-hi="${hi}">
+    <defs><linearGradient id="areagrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(57,208,255,.28)"/><stop offset="1" stop-color="rgba(57,208,255,0)"/></linearGradient></defs>
+    <g class="grid axis">${grid}</g><g class="axis">${xt}</g>
+    <path class="tarea" d="${area}"/>
+    <polyline class="raw" points="${tr.map(p => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ")}"/>
+    <polyline class="tline ${animate ? "draw" : ""}" style="--len:${Math.ceil(len) + 2}" points="${path}"/>
+    ${va.map((p, i) => `<circle class="vdot ${i === va.length - 1 ? "last" : ""}" cx="${x(p[0])}" cy="${y(p[1])}" r="5"><title>step ${p[0]} · held-out ${p[1]}</title></circle>`).join("")}
+    <g class="cross" id="cross" visibility="hidden"><line id="cx" y1="${P - 30}" y2="${H - P + 6}"/><rect id="cb" width="148" height="38" rx="6"/><text id="ct1"/><text id="ct2"/></g></svg>`;
+}
+function hookCrosshair(run) {
+  const svg = $("#losssvg"); if (!svg) return;
+  const pts = smooth(run.train || []), maxX = +svg.dataset.maxx, lo = +svg.dataset.lo, hi = +svg.dataset.hi;
+  svg.onmousemove = e => {
+    const r = svg.getBoundingClientRect(), vx = (e.clientX - r.left) / r.width * 900;
+    const step = (vx - 38) / (900 - 48) * maxX; if (!pts.length) return;
+    const p = pts.reduce((a, b) => Math.abs(b[0] - step) < Math.abs(a[0] - step) ? b : a);
+    const X = 38 + (900 - 48) * p[0] / maxX, Y = 260 - 38 + 6 - (260 - 48) * (p[1] - lo) / ((hi - lo) || 1);
+    $("#cross").setAttribute("visibility", "visible"); $("#cx").setAttribute("x1", X); $("#cx").setAttribute("x2", X);
+    const bx = Math.min(X + 10, 900 - 158); $("#cb").setAttribute("x", bx); $("#cb").setAttribute("y", Math.max(4, Y - 46));
+    $("#ct1").setAttribute("x", bx + 10); $("#ct1").setAttribute("y", Math.max(4, Y - 46) + 16); $("#ct1").textContent = `step ${fmt(p[0])}`;
+    $("#ct2").setAttribute("x", bx + 10); $("#ct2").setAttribute("y", Math.max(4, Y - 46) + 31); $("#ct2").textContent = `loss ${p[1].toFixed(4)}`;
+  };
+  svg.onmouseleave = () => $("#cross").setAttribute("visibility", "hidden");
+}
+function race(runs, ab) {
+  const tests = runs.filter(r => r.kind === "optimizer test" || /adamw|muon/.test(r.name));
+  if (!tests.length) return `<div style="color:var(--faint)">No optimizer test yet.</div>`;
+  const W = 520, H = 150, P = 30, all = tests.flatMap(r => r.train), maxX = Math.max(100, ...all.map(p => p[0]));
+  const ys = all.map(p => p[1]), lo = Math.min(...ys) * .95, hi = Math.max(...ys) * 1.03;
+  const x = v => P + (W - P - 6) * v / maxX, y = v => H - 16 - (H - 26) * (v - lo) / ((hi - lo) || 1);
+  const lines = tests.map(r => `<polyline fill="none" stroke="${RUNCOLOR(r.name)}" stroke-width="2" points="${smooth(r.train, 3).map(p => `${x(p[0])},${y(p[1])}`).join(" ")}" style="filter:drop-shadow(0 0 3px ${RUNCOLOR(r.name)})"/>`).join("");
+  const vals = tests.map(r => ({n: r.name, v: r.val.length > 1 ? r.val[r.val.length - 1][1] : null, steps: r.steps_done}));
+  const done = vals.filter(v => v.v != null), best = done.length ? Math.min(...done.map(v => v.v)) : null, worst = done.length ? Math.max(...done.map(v => v.v)) : 1;
+  const winner = ab ? ab.winner : null;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}"><g class="grid axis">${[0, .5, 1].map(f => { const v = lo + (hi - lo) * f; return `<line x1="${P}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}"/><text x="0" y="${y(v) + 3}">${v.toFixed(2)}</text>`; }).join("")}</g>${lines}</svg>` +
+    vals.map(v => `<div class="racebar"><span style="color:${RUNCOLOR(v.n)}">${esc(v.n)}${winner === v.n ? '<span class="win">WINNER</span>' : ""}</span>
+      <span class="t"><span class="f" data-w="${v.v != null ? 100 * (0.15 + 0.85 * (worst - v.v + 0.0001) / ((worst - best) || 1)) : 100 * v.steps / 100}" style="background:${RUNCOLOR(v.n)}"></span></span>
+      <span>${v.v != null ? v.v.toFixed(3) : `${v.steps}/100`}</span></div>`).join("") +
+    `<div class="legend">${winner ? `Winner trains the full model.` : "Final held-out loss after 100 identical steps; bar length: better is longer."}</div>`;
+}
+function donut(mix) {
+  if (!mix || !mix.parts) return `<div style="color:var(--faint)">No mix yet.</div>`;
+  const parts = Object.entries(mix.parts), total = parts.reduce((a, [, n]) => a + n, 0), C = 2 * Math.PI * 54;
+  let off = 0;
+  const segs = parts.map(([k, n], i) => { const len = C * n / total, s = `<circle class="seg" cx="75" cy="75" r="54" stroke="${COLORS[i % COLORS.length]}" stroke-dasharray="${len.toFixed(2)} ${C}" stroke-dashoffset="${(-off).toFixed(2)}"><title>${esc(k)}: ${n}</title></circle>`; off += len; return s; }).join("");
+  return `<div class="donut"><svg viewBox="0 0 150 150">${segs}</svg><div class="dleg">${parts.map(([k, n], i) => `<div><i style="background:${COLORS[i % COLORS.length]}"></i>${esc(k.replace(/_/g, " "))}<b>${fmt(n)}</b></div>`).join("")}
+    <div style="margin-top:4px;color:var(--text)">total<b>${fmt(total)}</b></div></div></div>`;
+}
+function history(runs, cur) {
+  return `<table><thead><tr><th>Run</th><th>Type</th><th>Optimizer</th><th>Steps</th><th>Best held-out</th><th>Last loss</th></tr></thead><tbody>` +
+    runs.map(r => { const best = r.val.length ? Math.min(...r.val.map(v => v[1])) : null, last = r.train.length ? r.train[r.train.length - 1][1] : null;
+      return `<tr class="${cur && r.name === cur.name ? "live" : ""}"><td>${esc(r.name)}</td><td>${esc(r.kind)}</td><td>${esc((r.optimizer || "-") + (r.lr ? " " + r.lr : ""))}</td>
+        <td>${fmt(r.steps_done)}${r.steps_total ? " / " + fmt(r.steps_total) : ""}</td><td>${best != null ? best.toFixed(3) : "-"}</td><td>${last != null ? last.toFixed(3) : "-"}</td></tr>`; }).join("") + `</tbody></table>`;
+}
+function term(lines) {
+  const el = $("#term"), atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
+  const fresh = lines.filter(l => !lastLog.includes(l)).length;
+  el.innerHTML = lines.map((l, i) => { const cls = /val\s/.test(l) ? "val" : /heatwatch/.test(l) ? "hw" : /^\[\d\d:\d\d\]/.test(l) ? "stage" : "";
+    return `<div class="${cls} ${i >= lines.length - fresh && !first ? "new" : ""} ${i === lines.length - 1 ? "cur" : ""}">${esc(l)}</div>`; }).join("");
+  lastLog = lines;
+  if (atEnd || first) el.scrollTop = el.scrollHeight;
+}
+function gauge(label, value, pct, color) { return `<div class="gauge"><small>${esc(label)}</small><b>${esc(value)}</b><div class="t"><div class="f" data-w="${pct}" style="background:${color}"></div></div></div>`; }
+
+async function tick() {
+  let d;
+  try { d = await (await fetch("/api/lab")).json(); } catch { $("#clock").textContent = "offline"; return; }
+  $("#clock").textContent = d.clock;
+  const c = d.current, a = d.active, m = d.machine || {};
+  const paused = a && a.paused, training = !!a && !paused;
+  const heatOk = (m.heat || "normal") === "normal", batt = m.battery;
+  $("#chips").innerHTML = [
+    `<span class="chip ${training ? "ok" : paused ? "warn" : ""}">STATE<b>${training ? "TRAINING" : paused ? "COOLING" : "IDLE"}</b></span>`,
+    `<span class="chip">JOB<b>${esc(a ? a.job : "none")}</b></span>`,
+    `<span class="chip ${heatOk ? "ok" : "bad"}">HEAT<b>${heatOk ? "NOMINAL" : "WARNING"}</b></span>`,
+    batt ? `<span class="chip ${batt.plugged ? "ok" : batt.percent < 40 ? "bad" : "warn"}">POWER<b>${batt.plugged ? "AC" : "BATT"} ${batt.percent}%</b></span>` : "",
+    `<span class="chip">RAM FREE<b>${m.ram_free_gb ?? "?"} GB</b></span>`].join("");
+  if (c) {
+    const pct = c.steps_total ? Math.min(100, 100 * c.steps_done / c.steps_total) : 0;
+    $("#ringbar").style.strokeDashoffset = 314.16 * (1 - pct / 100);
+    $("#pct").textContent = `${pct.toFixed(pct < 10 ? 1 : 0)}%`; $("#steps").textContent = `${fmt(c.steps_done)} / ${fmt(c.steps_total)}`;
+    $("#runkind").textContent = c.kind;
+    $("#state").innerHTML = `<span class="state ${training ? "train" : paused ? "cool" : "idle"}"><i></i>${training ? "TRAINING" : paused ? "COOLING PAUSE" : "IDLE"}</span>`;
+    $("#runkv").innerHTML = [["run", c.name], ["model", c.model || "-"], ["method", c.lora || "-"], ["optimizer", (c.optimizer || "-") + (c.lr ? " · lr " + c.lr : "")],
+      ["trainable", c.trainable || "-"], ["data", c.dataset || "-"], ["max seq", c.max_seq || "-"], ["cooling breaks", c.pauses]].map(([k, v]) => `<span>${k}</span><b>${esc(v)}</b>`).join("");
+    $("#eta").textContent = c.steps_done >= (c.steps_total || Infinity) ? "done" : hms(c.eta_s);
+    $("#spm").textContent = c.steps_per_min != null ? fmt(c.steps_per_min, 2) : "-";
+    countTo($("#tok"), "tok", c.tokens || 0);
+    $("#loss").innerHTML = lossChart(c, first); hookCrosshair(c);
+    $("#losstag").textContent = c.val.length ? `held-out ${c.val[c.val.length - 1][1]} @ step ${c.val[c.val.length - 1][0]}` : "";
+    const t = (c.tps || []).slice(-60), mx = Math.max(1, ...t.map(p => p[1]));
+    $("#tps").innerHTML = t.map(p => `<span style="height:${(100 * p[1] / mx).toFixed(1)}%" title="step ${p[0]}: ${p[1]} tok/s"></span>`).join("") || `<span style="height:2%"></span>`;
+    $("#tpsleg").textContent = t.length ? `last ${t[t.length - 1][1]} tok/s · peak ${mx} · average ${fmt(t.reduce((a, p) => a + p[1], 0) / t.length, 1)}` : "waiting for data";
+  }
+  $("#race").innerHTML = race(d.runs, d.ab);
+  $("#mix").innerHTML = donut(d.mix);
+  $("#hist").innerHTML = history(d.runs, c);
+  term(d.log || []); $("#logtag").textContent = c ? c.name : "";
+  const ramUsedPct = m.ram_gb && m.ram_free_gb != null ? 100 * (1 - m.ram_free_gb / m.ram_gb) : 0;
+  $("#sys").innerHTML = gauge("CPU", m.cpu || "-", 100, "var(--violet)") + gauge("CORES", m.cores, 100, "var(--violet)") +
+    gauge("MEMORY USED", m.ram_gb ? `${fmt(m.ram_gb - m.ram_free_gb, 1)} / ${m.ram_gb} GB` : "-", ramUsedPct, ramUsedPct > 85 ? "var(--red)" : "var(--cyan)") +
+    gauge("DISK FREE", `${m.disk_free_gb} GB`, 100 * m.disk_free_gb / (m.disk_total_gb || 1), "var(--green)") +
+    gauge("BATTERY", batt ? `${batt.percent}% ${batt.plugged ? "· AC" : "· battery"}` : "-", batt ? batt.percent : 0, batt && batt.percent < 40 ? "var(--red)" : "var(--amber)") +
+    gauge("HEAT", (m.heat || "normal").toUpperCase(), heatOk ? 30 : 95, heatOk ? "var(--green)" : "var(--red)");
+  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll("[data-w]").forEach(el => el.style.width = Math.max(0, Math.min(100, +el.dataset.w)) + "%")));
+  first = false;
+}
+tick(); setInterval(tick, 3000);
+</script>
+</body>
+</html>

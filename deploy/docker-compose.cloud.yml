@@ -1,0 +1,48 @@
+# Proxmino on a rented cloud server (any Linux VPS with Docker), answering with cloud models such as DeepSeek.
+# No local model here: a small server (1-2 vCPU, 2 GB RAM) is enough. Caddy gets a free HTTPS certificate automatically.
+#   1. Point a domain (for example ai.yourname.com) at the server's IP address (an A record).
+#   2. On the server, in the Proxmino folder:
+#        PROXMINO_DOMAIN=ai.yourname.com docker compose -f deploy/docker-compose.cloud.yml up -d --build
+#        docker compose -f deploy/docker-compose.cloud.yml exec proxmino python -m proxmino password
+#   3. Open https://ai.yourname.com, sign in, add your DeepSeek key in Settings > API keys.
+name: proxmino-cloud
+services:
+  searxng:
+    image: searxng/searxng   # web search for the app, no API key needed
+    restart: unless-stopped
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-change-me-please}
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    mem_limit: 256m
+    # no ports: only the app can reach it
+  proxmino:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    depends_on: [searxng]
+    environment:
+      PROXMINO_SEARXNG_URL: http://searxng:8080
+      PROXMINO_HOSTS: ${PROXMINO_DOMAIN:?set PROXMINO_DOMAIN to your domain}
+      PROXMINO_ENV_FILE: /data/.env      # keys live in the data volume, so updates keep them
+      PROXMINO_REMOTE_KEYS: "1"          # change keys from any device after signing in
+    volumes:
+      - data:/data
+      - bots:/home/proxmino/.proxmino
+    expose: ["3000"]                     # only Caddy reaches the app; nothing else is open to the internet
+    mem_limit: 768m
+  caddy:
+    image: caddy:2                       # pin a version you have tested, for example caddy:2.8
+    restart: unless-stopped
+    depends_on: [proxmino]
+    ports: ["80:80", "443:443"]
+    environment:
+      PROXMINO_DOMAIN: ${PROXMINO_DOMAIN}
+    command: caddy reverse-proxy --from ${PROXMINO_DOMAIN} --to proxmino:3000
+    volumes:
+      - caddy:/data
+volumes:
+  data:
+  bots:
+  caddy:

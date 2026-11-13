@@ -1,0 +1,103 @@
+# Main configuration. No secrets in this file: API keys go in .env and are
+# referenced here by environment-variable name (key_env).
+# Values changed in the Settings panel are saved to data/settings.json and
+# override this file.
+
+product_name: Proxmino
+host: 127.0.0.1
+port: 3000
+
+defaults:
+  persona: professional
+  allow_emoji: false          # style guide: emoji are stripped from output
+  brain: cloud                # cloud: DeepSeek answers when allow_cloud is on; otherwise your own model answers, offline
+  brain_model: ollama:proxmino:lite   # your model when brain is proxmino (DeepSeek stays a fallback only if cloud is on)
+  adult_mode: false           # 18+: adds the Uncensored tone (swearing, dark humor, adult topics); safety limits stay
+  send_without_asking: false  # emails, posts and messages go out without a click (still asks after web pages or tool output)
+  auto_reply_inbox: false     # inbox drafts are sent by themselves (never possible scams)
+  send_limit_per_day: 25      # automatic sends per 24 hours, then it asks again
+  allow_local: true           # local models run on this computer's CPU/GPU (it gets warm); opt in from Settings
+  allow_cloud: false          # privacy gate: cloud providers are skipped until enabled (prompts then leave this computer)
+  demo_fallback: true         # if no model is reachable, answer with a labelled demo provider
+
+# Providers. Every entry speaks the OpenAI-compatible chat API, which covers
+# Ollama, LM Studio, llama.cpp, vLLM, OpenAI, OpenRouter, Groq, Together,
+# Mistral, DeepSeek and most gateways.
+providers:
+  ollama:
+    type: ollama              # native API: keep-alive, think on/off, context size
+    base_url: http://localhost:11434
+    local: true
+    keep_alive: 60m           # keep the model loaded 60 minutes after the last answer, so the next one starts at once
+    num_ctx: 8192             # context window; smaller is faster and uses less memory (16384 for very long chats)
+  deepseek:
+    base_url: https://api.deepseek.com      # DeepSeek's own API (OpenAI-compatible), key in .env
+    key_env: DEEPSEEK_API_KEY
+  ollama_cloud:
+    type: ollama              # ollama.com directly, with OLLAMA_API_KEY from .env (no `ollama signin` needed)
+    base_url: https://ollama.com
+    key_env: OLLAMA_API_KEY
+    local: false              # prompts leave this computer: used only when cloud models are on
+  lmstudio:
+    base_url: http://localhost:1234/v1
+    local: true
+  openai:
+    base_url: https://api.openai.com/v1
+    key_env: OPENAI_API_KEY
+    local: false
+  openrouter:
+    base_url: https://openrouter.ai/api/v1
+    key_env: OPENROUTER_API_KEY
+    local: false
+  groq:
+    base_url: https://api.groq.com/openai/v1
+    key_env: GROQ_API_KEY
+    local: false
+
+# Model tiers. Each tier is an ordered fallback chain of provider:model.
+# The first entry that responds wins. Pick models you have pulled
+# (`ollama list`). Model names change often; check your provider's docs.
+# deepseek: and ollama_cloud: models run on those companies' servers (keys in .env, billed per token) and are
+# used only when cloud models are switched on (defaults.allow_cloud); otherwise the local ones answer.
+# DeepSeek V4.1 Flash (552B backbone) and V4 Pro (1.6T) have MIT-licensed weights.
+tiers:
+  fast:   [deepseek:deepseek-flash, ollama_cloud:deepseek-v4.1-flash, ollama:proxmino:v5, ollama:proxmino:lite]
+  chat:   [deepseek:deepseek-flash, ollama_cloud:deepseek-v4.1-flash, ollama:proxmino:v5, ollama:proxmino:lite]
+  reason: [deepseek:deepseek-flash, deepseek:deepseek-v4-pro, ollama_cloud:deepseek-v4-pro:0813, ollama:proxmino:v5, ollama:proxmino:lite]
+  code:   [deepseek:deepseek-flash, ollama_cloud:deepseek-v4.1-flash, ollama:proxmino:v5, ollama:proxmino:lite]
+
+search:
+  # Tried in this order. brave and tavily are official APIs and need a key in .env
+  # (BRAVE_SEARCH_API_KEY, TAVILY_API_KEY); searxng is a search server you run yourself.
+  providers: [brave, tavily, searxng]
+  searxng_url: ""             # e.g. http://localhost:8080 (empty = off)
+  # DuckDuckGo through the unofficial ddgs library automates the website and says it is for
+  # educational purposes only. Fine for personal use; keep this off in a product you sell.
+  allow_unofficial: false
+  # Wikipedia (official API, free, no key) is added next to the web results as a trusted reference;
+  # on its own it is enough for cited answers without any search key. Text is CC BY-SA: answers show the link.
+  wikipedia: true
+  wikipedia_lang: en
+  results: 6                  # results per query
+  fetch_pages: 4              # pages read in full per query
+  cache_minutes: 30
+
+limits:
+  context_chars: 24000        # history budget before older turns are summarized
+  request_timeout: 300
+  sandbox_seconds: 10
+  deepsearch_subquestions: 5
+  heavy_agents: [atlas, probe, edge]
+
+# Coding agent (`./run.sh code "goal"`). Modes: ask, auto-edit, auto (plan is --plan).
+# Deny rules and the sandbox (no network, writes only inside the project) apply in every mode.
+code:
+  mode: ask
+  allow: []          # extra regexes for commands that run without asking in auto mode
+  deny: []           # extra regexes that are always blocked
+  read_paths: []     # extra folders under home the sandbox may read (for example a shared venv)
+  test_command:      # leave empty to detect (pytest, npm test, go test, cargo test)
+  allow_test_edits: false   # tests and test folders are read-only for the agent unless this is true
+  # auto: free-form tool loop for models in loop_models, fixed localize, patch, test pipeline for the rest
+  strategy: auto
+  loop_models: []    # e.g. [ollama:some-strong-coder]
