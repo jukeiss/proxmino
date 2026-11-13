@@ -12,6 +12,13 @@ import time
 import urllib.request
 import webbrowser
 
+# Windows consoles default to a legacy code page; printing characters like "→" would crash the server.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 HOME_DIR = os.path.join(os.path.expanduser("~"), ".proxmino")
 if getattr(sys, "frozen", False):
     # Installed apps can't write inside their own folder: keep data next to your bots in ~/.proxmino.
