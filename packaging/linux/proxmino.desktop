@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Proxmino
+GenericName=Local AI assistant
+Comment=An AI assistant that runs on your own computer
+Exec=proxmino
+Icon=proxmino
+Terminal=false
+Categories=Utility;Office;Development;
+Keywords=ai;assistant;chat;llm;ollama;research;
+StartupNotify=true

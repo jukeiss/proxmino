@@ -1,0 +1,25 @@
+# Flatpak manifest. The release workflow drops the Linux build into ./src before building.
+app-id: io.github.jukeiss.Proxmino
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: proxmino
+rename-desktop-file: proxmino.desktop
+rename-icon: proxmino
+finish-args:
+  - --share=network        # Ollama on localhost, and web search when you turn it on
+  - --share=ipc
+  - --socket=x11           # the small control window
+  - --filesystem=home      # your files for the coding agent, data in ~/.proxmino
+modules:
+  - name: proxmino
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/lib /app/bin
+      - cp -a Proxmino /app/lib/proxmino
+      - ln -s /app/lib/proxmino/Proxmino /app/bin/proxmino
+      - install -Dm644 icon-512.png /app/share/icons/hicolor/512x512/apps/proxmino.png
+      - install -Dm644 proxmino.desktop /app/share/applications/proxmino.desktop
+    sources:
+      - type: dir
+        path: src

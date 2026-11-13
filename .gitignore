@@ -14,3 +14,9 @@ training/*-adapter/
 logs/
 proxmino-data.zip
 data_big/
+
+# installer builds
+build/
+dist/
+out/
+*.spec
