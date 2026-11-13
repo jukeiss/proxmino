@@ -1,0 +1,215 @@
+# Builds installers on GitHub's machines and attaches them to a GitHub Release.
+#   Push a tag like v0.1.0  ->  .dmg (Apple Silicon + Intel), Windows setup .exe + portable .exe,
+#                               .deb, .rpm, .AppImage and .flatpak on the Releases page.
+#   "Run workflow" by hand  ->  same builds, downloadable from the run page (no release).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  APP: Proxmino
+  SLUG: proxmino
+  APP_ID: io.github.jukeiss.Proxmino
+  SUMMARY: An AI assistant that runs on your own computer, with web search, deep research, a coding agent and a crew of agents.
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-14, target: mac-arm64 }
+          - { os: macos-15-intel, target: mac-x64 }
+          - { os: windows-latest, target: win-x64 }
+          - { os: ubuntu-22.04, target: linux-x64 }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Version
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          [[ "$GITHUB_REF_TYPE" == "tag" ]] || V="0.0.0-dev"
+          echo "VERSION=$V" >> "$GITHUB_ENV"
+          mkdir -p out build
+
+      - name: Install build tools
+        run: python -m pip install --upgrade pip pyinstaller pillow -r requirements.txt
+
+      - name: Icons
+        run: |
+          python - <<'EOF'
+          from PIL import Image
+          im = Image.open("packaging/icon.png").convert("RGBA")
+          im.resize((512, 512), Image.LANCZOS).save("build/icon-512.png")
+          im.save("build/icon.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+          EOF
+
+      - name: macOS icon
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p build/icon.iconset
+          for s in 16 32 128 256 512; do
+            sips -z $s $s packaging/icon.png --out build/icon.iconset/icon_${s}x${s}.png >/dev/null
+            sips -z $((s*2)) $((s*2)) packaging/icon.png --out build/icon.iconset/icon_${s}x${s}@2x.png >/dev/null
+          done
+          iconutil -c icns build/icon.iconset -o build/icon.icns
+
+      - name: Bundle with PyInstaller
+        run: |
+          ICON=build/icon-512.png
+          [[ "$RUNNER_OS" == "macOS" ]] && ICON=build/icon.icns
+          [[ "$RUNNER_OS" == "Windows" ]] && ICON=build/icon.ico
+          ARGS=(--noconfirm --clean --icon "$ICON" --paths .
+                --add-data "web:web" --add-data "crew:crew" --add-data "market:market"
+                --add-data "config.yaml:." --add-data "packaging/icon.png:packaging"
+                --collect-submodules proxmino --collect-submodules praxis
+                --collect-submodules uvicorn --collect-submodules ddgs --collect-data ddgs)
+          [[ "$RUNNER_OS" != "Linux" ]] && ARGS+=(--windowed)
+          [[ "$RUNNER_OS" == "macOS" ]] && ARGS+=(--osx-bundle-identifier "$APP_ID")
+          pyinstaller "${ARGS[@]}" --name "$APP" packaging/launcher.py
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            pyinstaller "${ARGS[@]}" --onefile --name "$APP-portable" packaging/launcher.py
+          fi
+
+      - name: Smoke test (start the bundled app, check it serves its page)
+        env:
+          APP_SMOKE: "1"
+        run: |
+          case "$RUNNER_OS" in
+            macOS) BIN="dist/$APP.app/Contents/MacOS/$APP" ;;
+            Windows) BIN="dist/$APP/$APP.exe" ;;
+            *) BIN="dist/$APP/$APP" ;;
+          esac
+          python - "$BIN" <<'EOF'
+          import subprocess, sys
+          r = subprocess.run([sys.argv[1]], capture_output=True, text=True, timeout=180)
+          print(r.stdout[-3000:], r.stderr[-3000:])
+          sys.exit(r.returncode)
+          EOF
+
+      - name: macOS .dmg
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dmg && cp -R "dist/$APP.app" dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname "$APP" -srcfolder dmg -ov -format UDZO "out/$APP-$VERSION-${{ matrix.target }}.dmg"
+
+      - name: Windows installer + portable
+        if: runner.os == 'Windows'
+        env:
+          MSYS_NO_PATHCONV: "1"
+        run: |
+          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" /DAppVersion=$VERSION packaging/windows/installer.iss
+          mv "out/$APP-Setup-x64.exe" "out/$APP-$VERSION-Setup-x64.exe"
+          mv "dist/$APP-portable.exe" "out/$APP-$VERSION-portable-x64.exe"
+
+      - name: Linux .deb .rpm .AppImage
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq rpm ruby ruby-dev build-essential >/dev/null
+          sudo gem install --no-document fpm >/dev/null
+          PKGV="${VERSION//-/\~}"
+          # .deb / .rpm: app in /opt, launcher in /usr/bin, menu entry and icon
+          S=stage
+          mkdir -p $S/opt $S/usr/bin $S/usr/share/applications $S/usr/share/icons/hicolor/512x512/apps
+          cp -a "dist/$APP" "$S/opt/$SLUG"
+          ln -s "/opt/$SLUG/$APP" "$S/usr/bin/$SLUG"
+          cp "packaging/linux/$SLUG.desktop" $S/usr/share/applications/
+          cp build/icon-512.png "$S/usr/share/icons/hicolor/512x512/apps/$SLUG.png"
+          for t in deb rpm; do
+            ext=$t
+            fpm -s dir -t $t -C $S -n "$SLUG" -v "$PKGV" -a native \
+              --description "$SUMMARY" --url "https://github.com/${GITHUB_REPOSITORY}" \
+              --maintainer "jukeiss <314460629+jukeiss@users.noreply.github.com>" --vendor jukeiss \
+              -p "out/$APP-$VERSION-linux-x64.$ext" .
+          done
+          # AppImage
+          A=AppDir
+          mkdir -p $A/usr/lib
+          cp -a "dist/$APP" "$A/usr/lib/$SLUG"
+          printf '#!/bin/sh\nHERE="$(dirname "$(readlink -f "$0")")"\nexec "$HERE/usr/lib/%s/%s" "$@"\n' "$SLUG" "$APP" > $A/AppRun
+          chmod +x $A/AppRun
+          cp "packaging/linux/$SLUG.desktop" $A/ && cp build/icon-512.png "$A/$SLUG.png"
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool $A "out/$APP-$VERSION-linux-x64.AppImage"
+          # inputs for the Flatpak job (tar keeps the executable bits)
+          mkdir -p fp && cp -a "dist/$APP" fp/ && cp build/icon-512.png fp/ && cp "packaging/linux/$SLUG.desktop" fp/
+          tar czf flatpak-src.tgz -C fp .
+
+      - name: Upload Flatpak inputs
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-src
+          path: flatpak-src.tgz
+          retention-days: 3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          path: out/*
+          if-no-files-found: error
+
+  flatpak:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: flatpak-src
+          path: fpdl
+      - name: Prepare
+        shell: bash
+        run: |
+          mkdir -p packaging/flatpak/src && tar xzf fpdl/flatpak-src.tgz -C packaging/flatpak/src
+          V="${GITHUB_REF_NAME#v}"; [[ "$GITHUB_REF_TYPE" == "tag" ]] || V="0.0.0-dev"
+          echo "VERSION=$V" >> "$GITHUB_ENV"
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: ${{ env.APP }}-${{ env.VERSION }}-linux-x64.flatpak
+          manifest-path: packaging/flatpak/${{ env.APP_ID }}.yml
+          cache: false
+          upload-artifact: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-flatpak
+          path: "*.flatpak"
+          if-no-files-found: error
+
+  release:
+    needs: [build, flatpak]
+    if: always() && startsWith(github.ref, 'refs/tags/v') && needs.build.result != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: files
+          merge-multiple: true
+      - name: Checksums
+        run: cd files && sha256sum * > SHA256SUMS.txt && ls -la
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: files/*
+          body_path: packaging/RELEASE_NOTES.md
+          generate_release_notes: true

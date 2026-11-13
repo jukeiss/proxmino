@@ -16,7 +16,21 @@ Proxmino comes with its own open models, fine-tuned from IBM Granite 4.2:
 > [Releases](https://github.com/jukeiss/proxmino/releases) when they are done. Until then the app works with
 > any model you have in Ollama (it picks one automatically).
 
-## Quick start
+## Download
+
+Get the installer for your computer from the [latest release](https://github.com/jukeiss/proxmino/releases/latest):
+
+| Your computer | Download |
+|---|---|
+| Mac (Apple Silicon or Intel) | `.dmg` → drag Proxmino to Applications |
+| Windows | `Setup-x64.exe` (installer) or `portable-x64.exe` (no install) |
+| Ubuntu / Debian | `.deb` → `sudo apt install ./Proxmino-*.deb` |
+| Fedora / openSUSE | `.rpm` → `sudo dnf install ./Proxmino-*.rpm` |
+| Any Linux | `.AppImage` (make it executable, run it) or `.flatpak` (`flatpak install --user Proxmino-*.flatpak`) |
+
+The builds aren't code-signed yet: on macOS right-click the app → **Open** the first time; on Windows click **More info** → **Run anyway**. You still need [Ollama](https://ollama.com) running with a model.
+
+## Quick start (from source)
 
 ```bash
 git clone https://github.com/jukeiss/proxmino
