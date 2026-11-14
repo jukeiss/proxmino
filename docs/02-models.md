@@ -7,10 +7,11 @@
 
 Both are Q4_K_M GGUF files (about 4.5 bits per weight) and run with [Ollama](https://ollama.com).
 
-> **Status:** Proxmino v5 is released
-> ([proxmino-v5-1.0](https://github.com/jukeiss/proxmino/releases/tag/proxmino-v5-1.0)). It was trained for
-> 1,073 steps on a free Colab T4; its held-out loss went from 0.869 at step 200 to 0.800 at the end. Proxmino
-> Lite is still training. Benchmark scores for both, against plain Granite 4.2, will be added here when measured.
+> **Status:** both models are released:
+> [proxmino-v5-1.0](https://github.com/jukeiss/proxmino/releases/tag/proxmino-v5-1.0) and
+> [proxmino-lite-1.0](https://github.com/jukeiss/proxmino/releases/tag/proxmino-lite-1.0). Each was trained for
+> 1,073 steps on a free Colab T4. Held-out loss: v5 went from 0.869 at step 200 to 0.800, Lite from 0.962 to
+> 0.896. Benchmark scores against plain Granite 4.2 will be added here when measured.
 
 ## Add a model
 

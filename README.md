@@ -12,10 +12,10 @@ Proxmino comes with its own open models, fine-tuned from IBM Granite 4.2:
 | **Proxmino v5** | Granite 4.2 8B | about 5 GB | 16 GB RAM |
 | **Proxmino Lite** | Granite 4.2 3B | about 2 GB | 8 GB RAM |
 
-> **Proxmino v5 is out:** `./scripts/get-model.sh v5` or the
-> [v5 release](https://github.com/jukeiss/proxmino/releases/tag/proxmino-v5-1.0). Proxmino Lite is still
-> training, and benchmark scores against plain Granite will be added here when they're measured. The app also
-> works with any model you have in Ollama.
+> **Both models are out:** `./scripts/get-model.sh v5` or `./scripts/get-model.sh lite`
+> ([v5 release](https://github.com/jukeiss/proxmino/releases/tag/proxmino-v5-1.0),
+> [Lite release](https://github.com/jukeiss/proxmino/releases/tag/proxmino-lite-1.0)). Benchmark scores against
+> plain Granite will be added here when they're measured. The app also works with any model you have in Ollama.
 
 ## Download
 
